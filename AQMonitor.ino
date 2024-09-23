@@ -164,6 +164,6 @@ void loop() {
 
   postData(vocCount, temperature, humidity, toluenePpm, formaldehydePpm);
 
-  esp_sleep_enable_timer_wakeup(10000000); // One minute
+  esp_sleep_enable_timer_wakeup(60000000); // One minute
   esp_deep_sleep_start();
 }
