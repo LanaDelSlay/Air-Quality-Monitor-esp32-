@@ -12,7 +12,7 @@
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define DHTPIN 26
-#define VOC_PIN 25
+#define VOC_PIN 36
 #define DHTTYPE DHT11
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 DHT_Unified dht(DHTPIN, DHTTYPE);
@@ -88,6 +88,7 @@ void postData(float vocCount, float temperature, float humidity, float toluenePp
 
     if (httpResponseCode > 0) {
       String response = http.getString();
+      Serial.println(response);
     } else {
       Serial.println("Error on sending POST: " + String(httpResponseCode));
     }
@@ -115,20 +116,18 @@ void setup() {
 }
 
 void loop() {
-  WiFi.disconnect(true);
-  delay(500);
   sensors_event_t event;
 
   int gasAnalogValue = analogRead(VOC_PIN);
-  
+
   float voltage = adcToVoltage(gasAnalogValue);
   float vocCount = calculateVOCs(voltage);
   float toluenePpm = calculateToluenePPM(voltage);
   float formaldehydePpm = calculateFormaldehyde(voltage);
-  
+
   dht.temperature().getEvent(&event);
   float temperature = ((1.8 * event.temperature) + 32);
-  
+
   dht.humidity().getEvent(&event);
   float humidity = event.relative_humidity;
 
@@ -151,19 +150,11 @@ void loop() {
   display.println("CH2O:");
   display.print(formaldehydePpm);
   display.println(" ppm");
-  
-  display.display();
-  
-  connectToWifi();
 
-  while(WiFi.status()!= WL_CONNECTED) {
-    delay(1000);
-    Serial.print("#");
-  }
-  Serial.println();
+  display.display();
 
   postData(vocCount, temperature, humidity, toluenePpm, formaldehydePpm);
 
-  esp_sleep_enable_timer_wakeup(60000000); // One minute
+  esp_sleep_enable_timer_wakeup(20000000); // 20 secs
   esp_deep_sleep_start();
 }
